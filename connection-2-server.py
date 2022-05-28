@@ -1,15 +1,15 @@
 import socketio
-import RPi.GPIO as GPIO
+# import RPi.GPIO as GPIO
 import time
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+# GPIO.setmode(GPIO.BCM)
+# GPIO.setwarnings(False)
 
-led = 21
+# 
 
-GPIO.setup(led,GPIO.OUT)
+# GPIO.setup(led,GPIO.OUT)
 
-sio = socketio.Client() #logger=True, engineio_logger=True
+sio = socketio.Client(logger=True, engineio_logger=True) #logger=True, engineio_logger=True
 
 @sio.event
 def connect():
@@ -19,19 +19,30 @@ def connect():
 def disconnect():
     print('disconnect')
 
-@sio.event
-def order_taken(data):
-    GPIO.output(led,1)
-    time.sleep(0.5)
-    GPIO.output(led,0)
-    print(data)
+def my_background_task(myArgument):
+    c = 0;
+    while True:
+        try:
+            c+=1
+            plant_data = {
+                "humidity":c,
+                "temperature":c,
+                "soilHumidity":c,
+                "light":c,
+                "water":c,
+            }
+            
+            sio.emit("plantData",plant_data)
+            time.sleep(10)
+        except:
+            break
+      
+    pass
 
 def main():
-    sio.connect('http://airadrone.herokuapp.com')
-    sio.emit("order",{"hola":"prueba"})
-    sio.emit("order",{"hola":"prueba1"})
-    sio.emit("order",{"hola":"prueba2"})
-
+    sio.connect('http://localhost:3001/')
+    task = sio.start_background_task(my_background_task, 123)
+   
 if __name__=="__main__":
     main()
     
